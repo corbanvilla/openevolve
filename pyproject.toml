@@ -57,10 +57,11 @@ markers = [
 addopts = "--strict-markers"
 
 [tool.setuptools.packages.find]
-include = ["openevolve*"]
+include = ["openevolve*", "scripts"]
 
 [tool.setuptools.package-data]
 openevolve = ["prompts/defaults/*.txt", "prompts/defaults/*.json", "py.typed"]
+scripts = ["templates/*.html", "static/css/*.css", "static/js/*.js"]
 
 [tool.setuptools.dynamic]
 version = {attr = "openevolve._version.__version__"}

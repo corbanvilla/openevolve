@@ -1,14 +1,18 @@
-import os
-import json
 import glob
+import json
 import logging
-import shutil
+import os
 import re as _re
-from flask import Flask, render_template, render_template_string, jsonify
+import shutil
 
+from flask import Flask, jsonify, render_template, render_template_string
 
 logger = logging.getLogger(__name__)
-app = Flask(__name__, template_folder="templates")
+app = Flask(
+    __name__,
+    template_folder=os.path.join(os.path.dirname(__file__), "templates"),
+    static_folder=os.path.join(os.path.dirname(__file__), "static"),
+)
 
 
 def find_latest_checkpoint(base_folder):
