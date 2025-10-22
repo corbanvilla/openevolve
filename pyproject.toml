@@ -60,7 +60,7 @@ addopts = "--strict-markers"
 include = ["openevolve*"]
 
 [tool.setuptools.package-data]
-openevolve = ["prompts/defaults/*.txt", "prompts/defaults/*.json", "py.typed", "*.pyi"]
+openevolve = ["prompts/defaults/*.txt", "prompts/defaults/*.json", "py.typed"]
 
 [tool.setuptools.dynamic]
 version = {attr = "openevolve._version.__version__"}
