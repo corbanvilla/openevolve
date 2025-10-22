@@ -246,17 +246,17 @@ def _run_iteration_worker(
         child_metrics = asyncio.run(_worker_evaluator.evaluate_program(child_code, child_id))
         artifacts = _worker_evaluator.get_pending_artifacts(child_id)
 
-        # ==== Set Witness as Child Code ====
+        # ==== Set code as Child Code ====
         if not artifacts:
             raise ValueError("artifacts not found!")
-        if "witness" not in artifacts:
-            raise ValueError("witness not found in artifacts!")
-        if not isinstance(artifacts["witness"], str):
-            raise ValueError("witness is not a string!")
+        if "code" not in artifacts:
+            raise ValueError("code not found in artifacts!")
+        if not isinstance(artifacts["code"], str):
+            raise ValueError("code is not a string!")
 
-        child_code = artifacts["witness"]
-        llm_response = artifacts["witness"]
-        del artifacts["witness"]
+        child_code = artifacts["code"]
+        llm_response = artifacts["code"]
+        del artifacts["code"]
 
         changes_summary = "Full rewrite"
 
