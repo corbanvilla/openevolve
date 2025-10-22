@@ -3,15 +3,14 @@ Process-based parallel controller for true parallelism
 """
 
 import asyncio
+import json
 import logging
 import multiprocessing as mp
-import pickle
-import signal
 import time
-from concurrent.futures import ProcessPoolExecutor, Future, TimeoutError as FutureTimeoutError
-from dataclasses import dataclass, asdict
-from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from concurrent.futures import Future, ProcessPoolExecutor
+from concurrent.futures import TimeoutError as FutureTimeoutError
+from dataclasses import asdict, dataclass
+from typing import Any, Dict, List, Optional
 
 from openevolve.config import Config
 from openevolve.database import Program, ProgramDatabase
@@ -55,8 +54,8 @@ def _worker_init(config_dict: dict, evaluation_file: str, parent_env: dict = Non
         DatabaseConfig,
         EvaluatorConfig,
         LLMConfig,
-        PromptConfig,
         LLMModelConfig,
+        PromptConfig,
     )
 
     # Reconstruct model objects
@@ -183,61 +182,82 @@ def _run_iteration_worker(
 
         iteration_start = time.time()
 
-        # Generate code modification (sync wrapper for async)
-        try:
-            llm_response = asyncio.run(
-                _worker_llm_ensemble.generate_with_context(
-                    system_message=prompt["system"],
-                    messages=[{"role": "user", "content": prompt["user"]}],
-                )
-            )
-        except Exception as e:
-            logger.error(f"LLM generation failed: {e}")
-            return SerializableResult(error=f"LLM generation failed: {str(e)}", iteration=iteration)
+        #
+        # ==== Disable Solution Generation ====
+        #
+        # # Generate code modification (sync wrapper for async)
+        # try:
+        #     llm_response = asyncio.run(
+        #         _worker_llm_ensemble.generate_with_context(
+        #             system_message=prompt["system"],
+        #             messages=[{"role": "user", "content": prompt["user"]}],
+        #         )
+        #     )
+        # except Exception as e:
+        #     logger.error(f"LLM generation failed: {e}")
+        #     return SerializableResult(error=f"LLM generation failed: {str(e)}", iteration=iteration)
 
-        # Check for None response
-        if llm_response is None:
-            return SerializableResult(error="LLM returned None response", iteration=iteration)
+        # # Check for None response
+        # if llm_response is None:
+        #     return SerializableResult(error="LLM returned None response", iteration=iteration)
 
-        # Parse response based on evolution mode
-        if _worker_config.diff_based_evolution:
-            from openevolve.utils.code_utils import extract_diffs, apply_diff, format_diff_summary
+        # # Parse response based on evolution mode
+        # if _worker_config.diff_based_evolution:
+        #     from openevolve.utils.code_utils import (
+        #         apply_diff,
+        #         extract_diffs,
+        #         format_diff_summary,
+        #     )
 
-            diff_blocks = extract_diffs(llm_response)
-            if not diff_blocks:
-                return SerializableResult(
-                    error=f"No valid diffs found in response", iteration=iteration
-                )
+        #     diff_blocks = extract_diffs(llm_response)
+        #     if not diff_blocks:
+        #         return SerializableResult(
+        #             error=f"No valid diffs found in response", iteration=iteration
+        #         )
 
-            child_code = apply_diff(parent.code, llm_response)
-            changes_summary = format_diff_summary(diff_blocks)
-        else:
-            from openevolve.utils.code_utils import parse_full_rewrite
+        #     child_code = apply_diff(parent.code, llm_response)
+        #     changes_summary = format_diff_summary(diff_blocks)
+        # else:
+        #     from openevolve.utils.code_utils import parse_full_rewrite
 
-            new_code = parse_full_rewrite(llm_response, _worker_config.language)
-            if not new_code:
-                return SerializableResult(
-                    error=f"No valid code found in response", iteration=iteration
-                )
+        #     new_code = parse_full_rewrite(llm_response, _worker_config.language)
+        #     if not new_code:
+        #         return SerializableResult(
+        #             error=f"No valid code found in response", iteration=iteration
+        #         )
 
-            child_code = new_code
-            changes_summary = "Full rewrite"
+        #     child_code = new_code
+        #     changes_summary = "Full rewrite"
 
-        # Check code length
-        if len(child_code) > _worker_config.max_code_length:
-            return SerializableResult(
-                error=f"Generated code exceeds maximum length ({len(child_code)} > {_worker_config.max_code_length})",
-                iteration=iteration,
-            )
+        # # Check code length
+        # if len(child_code) > _worker_config.max_code_length:
+        #     return SerializableResult(
+        #         error=f"Generated code exceeds maximum length ({len(child_code)} > {_worker_config.max_code_length})",
+        #         iteration=iteration,
+        #     )
+
+        # ==== Set Prompt as Child Code ====
+        child_code = json.dumps(prompt)
 
         # Evaluate the child program
         import uuid
 
         child_id = str(uuid.uuid4())
         child_metrics = asyncio.run(_worker_evaluator.evaluate_program(child_code, child_id))
-
-        # Get artifacts
         artifacts = _worker_evaluator.get_pending_artifacts(child_id)
+
+        # ==== Set Witness as Child Code ====
+        if not artifacts:
+            raise ValueError("artifacts not found!")
+        if "witness" not in artifacts:
+            raise ValueError("witness not found in artifacts!")
+        if not isinstance(artifacts["witness"], str):
+            raise ValueError("witness is not a string!")
+
+        child_code = artifacts["witness"]
+        llm_response = artifacts["witness"]
+
+        changes_summary = "Full rewrite"
 
         # Create child program
         child_program = Program(
@@ -468,6 +488,12 @@ class ProcessParallelController:
                 elif result.child_program_dict:
                     # Reconstruct program from dict
                     child_program = Program(**result.child_program_dict)
+
+                    # ==== Store all artifacts in DB as JSON ====
+                    try:
+                        child_program.artifacts_json = json.dumps(result.artifacts)
+                    except Exception as e:
+                        logger.error(f"Error serializing artifacts: {e}")
 
                     # Add to database (will auto-inherit parent's island)
                     # No need to specify target_island - database will handle parent island inheritance

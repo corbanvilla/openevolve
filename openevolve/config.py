@@ -3,11 +3,21 @@ Configuration handling for OpenEvolve
 """
 
 import os
+from importlib import import_module
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Union
 
 import yaml
+
+def _resolve_callable(path: str):
+    """Resolve a dotted or module:path reference into a callable."""
+    if ":" in path:
+        module_name, attr = path.split(":", 1)
+    else:
+        module_name, attr = path.rsplit(".", 1)
+    module = import_module(module_name)
+    return getattr(module, attr)
 
 
 @dataclass
@@ -41,6 +51,15 @@ class LLMModelConfig:
     
     # Reasoning parameters
     reasoning_effort: Optional[str] = None
+
+    def __post_init__(self):
+        if isinstance(self.init_client, str):
+            try:
+                self.init_client = _resolve_callable(self.init_client)
+            except Exception as exc:
+                raise ValueError(
+                    f"Could not resolve init_client '{self.init_client}': {exc}"
+                ) from exc
 
 
 @dataclass

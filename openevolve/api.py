@@ -2,16 +2,16 @@
 High-level API for using OpenEvolve as a library
 """
 import asyncio
-import tempfile
-import os
-import uuid
 import inspect
-from typing import Union, Callable, Optional, List, Dict, Any, Tuple
+import os
+import tempfile
+import uuid
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
+from openevolve.config import Config, LLMModelConfig, load_config
 from openevolve.controller import OpenEvolve
-from openevolve.config import Config, load_config, LLMModelConfig
 from openevolve.database import Program
 
 
@@ -35,7 +35,8 @@ def run_evolution(
     config: Union[str, Path, Config, None] = None,
     iterations: Optional[int] = None,
     output_dir: Optional[str] = None,
-    cleanup: bool = True
+    cleanup: bool = True,
+    target_score: Optional[float] = None
 ) -> EvolutionResult:
     """
     Run evolution with flexible inputs - the main library API
@@ -89,7 +90,7 @@ def run_evolution(
         )
     """
     return asyncio.run(_run_evolution_async(
-        initial_program, evaluator, config, iterations, output_dir, cleanup
+        initial_program, evaluator, config, iterations, output_dir, cleanup, target_score
     ))
 
 
@@ -99,7 +100,8 @@ async def _run_evolution_async(
     config: Union[str, Path, Config, None],
     iterations: Optional[int],
     output_dir: Optional[str],
-    cleanup: bool
+    cleanup: bool,
+    target_score: Optional[float]
 ) -> EvolutionResult:
     """Async implementation of run_evolution"""
     
@@ -145,10 +147,10 @@ async def _run_evolution_async(
             initial_program_path=program_path,
             evaluation_file=evaluator_path,
             config=config_obj,
-            output_dir=actual_output_dir
+            output_dir=actual_output_dir,
         )
         
-        best_program = await controller.run(iterations=iterations)
+        best_program = await controller.run(iterations=iterations, target_score=target_score)
         
         # Prepare result
         best_score = 0.0

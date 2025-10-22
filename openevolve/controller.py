@@ -265,9 +265,10 @@ class OpenEvolve:
             initial_program_id = str(uuid.uuid4())
 
             # Evaluate the initial program
-            initial_metrics = await self.evaluator.evaluate_program(
-                self.initial_program_code, initial_program_id
-            )
+            # initial_metrics = await self.evaluator.evaluate_program(
+            #     self.initial_program_code, initial_program_id
+            # )
+            initial_metrics = {"score": 0}
 
             initial_program = Program(
                 id=initial_program_id,
