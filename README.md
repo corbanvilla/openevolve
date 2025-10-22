@@ -1,5 +1,7 @@
 # OpenEvolve
 
+> This fork is for evaluating in an external environment with OpenEvolve.
+
 <div align="center">
 
 <img src="openevolve-logo.png" alt="OpenEvolve Logo" width="400">
