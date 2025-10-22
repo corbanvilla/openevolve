@@ -10,8 +10,8 @@
 
 <p align="center">
   <a href="https://github.com/codelion/openevolve/stargazers"><img src="https://img.shields.io/github/stars/codelion/openevolve?style=social" alt="GitHub stars"></a>
-  <a href="https://pypi.org/project/openevolve/"><img src="https://img.shields.io/pypi/v/openevolve" alt="PyPI version"></a>
-  <a href="https://pypi.org/project/openevolve/"><img src="https://img.shields.io/pypi/dm/openevolve" alt="PyPI downloads"></a>
+  <a href="https://pypi.org/project/openevolve-ext-env/"><img src="https://img.shields.io/pypi/v/openevolve-ext-env" alt="PyPI version"></a>
+  <a href="https://pypi.org/project/openevolve-ext-env/"><img src="https://img.shields.io/pypi/dm/openevolve-ext-env" alt="PyPI downloads"></a>
   <a href="https://github.com/codelion/openevolve/blob/main/LICENSE"><img src="https://img.shields.io/github/license/codelion/openevolve" alt="License"></a>
 </p>
 
@@ -78,7 +78,7 @@ Get from zero to evolving code in **30 seconds**:
 
 ```bash
 # Install OpenEvolve
-pip install openevolve
+pip install openevolve-ext-env
 
 # The example uses Google Gemini by default (free tier available)
 # Get your API key from: https://aistudio.google.com/apikey
@@ -242,7 +242,7 @@ OpenEvolve implements a sophisticated **evolutionary coding pipeline** that goes
 <summary><b>📦 PyPI (Recommended)</b></summary>
 
 ```bash
-pip install openevolve
+pip install openevolve-ext-env
 ```
 
 </details>
