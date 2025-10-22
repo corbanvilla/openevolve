@@ -256,6 +256,7 @@ def _run_iteration_worker(
 
         child_code = artifacts["witness"]
         llm_response = artifacts["witness"]
+        del artifacts["witness"]
 
         changes_summary = "Full rewrite"
 
