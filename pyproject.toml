@@ -61,7 +61,7 @@ include = ["openevolve*", "openevolve_visualizer"]
 
 [tool.setuptools.package-data]
 openevolve = ["prompts/defaults/*.txt", "prompts/defaults/*.json", "py.typed"]
-openevolve_visualizer = ["templates/*.html", "static/css/*.css", "static/js/*.js"]
+openevolve_visualizer = ["templates/*.html", "static/css/*.css", "static/js/*.js", "py.typed"]
 
 [tool.setuptools.dynamic]
 version = {attr = "openevolve._version.__version__"}
